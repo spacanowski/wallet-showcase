@@ -11,6 +11,7 @@ repositories {
 
 ext {
     versions = [
+        lombok                  : '1.18.10',
         dropwizard              : '2.0.0',
         junit                   : '5.3.2',
         junitPlatform           : '1.5.2',
@@ -21,6 +22,9 @@ ext {
 }
 
 dependencies {
+    compileOnly "org.projectlombok:lombok:${versions.lombok}"
+    annotationProcessor "org.projectlombok:lombok:${versions.lombok}"
+
     implementation "io.dropwizard:dropwizard-core:${versions.dropwizard}"
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:${versions.junit}"
