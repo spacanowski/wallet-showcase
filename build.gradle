@@ -1,0 +1,33 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'maven'
+
+sourceCompatibility = 1.11
+targetCompatibility = 1.11
+
+repositories {
+    jcenter()
+}
+
+ext {
+    versions = [
+        dropwizard              : '2.0.0',
+        junit                   : '5.3.2',
+        junitPlatform           : '1.5.2',
+        hamcrest                : '2.0.0.0',
+        mockito                 : '3.0.0',
+        hikari                  : '3.4.1'
+    ]
+}
+
+dependencies {
+    implementation "io.dropwizard:dropwizard-core:${versions.dropwizard}"
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${versions.junit}"
+    testImplementation "org.junit.platform:junit-platform-commons:${versions.junitPlatform}"
+    testImplementation "org.hamcrest:java-hamcrest:${versions.hamcrest}"
+    testImplementation "org.mockito:mockito-core:${versions.mockito}"
+    testImplementation "org.mockito:mockito-junit-jupiter:${versions.mockito}"
+
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${versions.junit}"
+}
