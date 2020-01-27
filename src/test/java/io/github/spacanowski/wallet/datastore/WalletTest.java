@@ -1,8 +1,12 @@
 package io.github.spacanowski.wallet.datastore;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import io.github.spacanowski.wallet.exception.AccountNotFoundException;
 
 import java.math.BigDecimal;
 
@@ -89,7 +93,7 @@ public class WalletTest {
         var toInitialBalance = BigDecimal.valueOf(0.0);
         var to = wallet.create(toInitialBalance);
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(AccountNotFoundException.class,
                      () -> wallet.transfer("123123", to.getId(), BigDecimal.valueOf(2)));
 
         var toAfterTransfer = wallet.get(to.getId());
@@ -104,11 +108,25 @@ public class WalletTest {
         var fromInitialBalance = BigDecimal.valueOf(2.2);
         var from = wallet.create(fromInitialBalance);
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(AccountNotFoundException.class,
                      () -> wallet.transfer(from.getId(), "123123", BigDecimal.valueOf(2)));
 
         var fromAfterTransfer = wallet.get(from.getId());
 
         assertThat(fromAfterTransfer.getBalance(), equalTo(fromInitialBalance));
+    }
+
+    @Test
+    public void shouldDeleteAccount() {
+        var wallet = new Wallet();
+        var balance = BigDecimal.valueOf(2.2);
+
+        var account = wallet.create(balance);
+
+        assertNotNull(wallet.get(account.getId()));
+
+        wallet.delete(account.getId());
+
+        assertNull(wallet.get(account.getId()));
     }
 }

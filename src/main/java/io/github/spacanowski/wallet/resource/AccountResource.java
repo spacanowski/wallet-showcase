@@ -12,6 +12,7 @@ import java.net.URI;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -65,6 +66,18 @@ public class AccountResource {
 
         return Response.ok()
                        .entity(accountService.transferResources(id, toId, transfer))
+                       .build();
+    }
+
+    @Timed
+    @DELETE
+    @Path("/{id}")
+    public Response deleteAccount(@PathParam("id") String id) {
+        log.debug("Deleting account {}", id);
+
+        accountService.deleteAccount(id);
+
+        return Response.noContent()
                        .build();
     }
 }

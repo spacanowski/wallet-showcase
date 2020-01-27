@@ -3,6 +3,7 @@ package io.github.spacanowski.wallet.service;
 import static io.github.spacanowski.wallet.model.mapper.AccountMapper.toOutput;
 
 import io.github.spacanowski.wallet.datastore.Wallet;
+import io.github.spacanowski.wallet.exception.AccountNotFoundException;
 import io.github.spacanowski.wallet.model.data.Account;
 import io.github.spacanowski.wallet.model.input.CreateAccount;
 import io.github.spacanowski.wallet.model.input.Transfer;
@@ -19,7 +20,13 @@ public class AccountService {
     private final Wallet wallet;
 
     public AccountOutput getAccount(String id) {
-        return toAccountOutput(wallet.get(id));
+        var result = wallet.get(id);
+
+        if (result == null) {
+            throw new AccountNotFoundException(id);
+        }
+
+        return toAccountOutput(result);
     }
 
     public AccountOutput createAccount(CreateAccount account) {
@@ -35,6 +42,10 @@ public class AccountService {
 
         return new TransferOutput(toAccountOutput(wallet.get(from)),
                                   toAccountOutput(wallet.get(to)));
+    }
+
+    public void deleteAccount(String id) {
+        wallet.delete(id);
     }
 
     private AccountOutput toAccountOutput(Account account) {

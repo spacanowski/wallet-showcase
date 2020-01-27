@@ -4,6 +4,8 @@ import static javax.ws.rs.client.Entity.entity;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -15,10 +17,12 @@ import static org.mockito.Mockito.when;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import io.github.spacanowski.wallet.exception.AccountNotFoundException;
 import io.github.spacanowski.wallet.model.input.CreateAccount;
 import io.github.spacanowski.wallet.model.input.Transfer;
 import io.github.spacanowski.wallet.model.output.AccountOutput;
 import io.github.spacanowski.wallet.model.output.TransferOutput;
+import io.github.spacanowski.wallet.resource.providers.AccountNotFoundExceptionMapper;
 import io.github.spacanowski.wallet.resource.providers.IllegalArgumentExceptionMapper;
 import io.github.spacanowski.wallet.service.AccountService;
 
@@ -38,6 +42,7 @@ public class AccountResourceTest {
     public static final ResourceExtension resource = ResourceExtension.builder()
                                                                       .addResource(new AccountResource(accountService))
                                                                       .addProvider(new IllegalArgumentExceptionMapper())
+                                                                      .addProvider(new AccountNotFoundExceptionMapper())
                                                                       .build();
 
     @AfterEach
@@ -132,6 +137,20 @@ public class AccountResourceTest {
     }
 
     @Test
+    public void shouldReturnNotFound() {
+        var accountId = "1-1-1";
+
+        when(accountService.getAccount(eq(accountId)))
+        .thenThrow(AccountNotFoundException.class);
+
+        var response = resource.target("/accounts/" + accountId)
+                               .request()
+                               .get();
+
+        assertThat(response.getStatus(), equalTo(NOT_FOUND.getStatusCode()));
+    }
+
+    @Test
     public void shouldTransferBetweenAccounts() {
         var fromId = "1-1-1";
         var fromBalance = BigDecimal.valueOf(1.1);
@@ -205,5 +224,16 @@ public class AccountResourceTest {
                                .put(entity(transfer, APPLICATION_JSON));
 
         assertThat(response.getStatus(), equalTo(BAD_REQUEST.getStatusCode()));
+    }
+
+    @Test
+    public void shouldDeleteAccount() {
+        var id = "1-1-1";
+
+        var response = resource.target(String.format("/accounts/%s", id))
+                               .request()
+                               .delete();
+
+        assertThat(response.getStatus(), equalTo(NO_CONTENT.getStatusCode()));
     }
 }

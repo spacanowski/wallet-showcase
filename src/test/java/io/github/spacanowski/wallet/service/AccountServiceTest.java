@@ -9,6 +9,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 import io.github.spacanowski.wallet.datastore.Wallet;
+import io.github.spacanowski.wallet.exception.AccountNotFoundException;
 import io.github.spacanowski.wallet.model.data.Account;
 import io.github.spacanowski.wallet.model.input.CreateAccount;
 import io.github.spacanowski.wallet.model.input.Transfer;
@@ -69,6 +70,17 @@ public class AccountServiceTest {
 
         assertThat(result.getId(), equalTo(accountId));
         assertThat(result.getBalance(), equalTo(balance));
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionForNonExitingAccount() {
+        var accountId = "1-1-1";
+
+        when(wallet.get(eq(accountId)))
+        .thenReturn(null);
+
+        assertThrows(AccountNotFoundException.class,
+                     () -> accountService.getAccount(accountId));
     }
 
     @Test

@@ -1,7 +1,9 @@
 package io.github.spacanowski.wallet.datastore;
 
+import io.github.spacanowski.wallet.exception.AccountNotFoundException;
 import io.github.spacanowski.wallet.model.data.Account;
 import io.github.spacanowski.wallet.model.data.CreateOpertaion;
+import io.github.spacanowski.wallet.model.data.DeleteOperation;
 import io.github.spacanowski.wallet.model.data.Operation;
 
 import java.math.BigDecimal;
@@ -52,13 +54,13 @@ public class Wallet {
         var from = accounts.get(fromId);
 
         if (from == null) {
-            throw new IllegalArgumentException("No account with id: " + fromId);
+            throw new AccountNotFoundException(fromId);
         }
 
         var to = accounts.get(toId);
 
         if (to == null) {
-            throw new IllegalArgumentException("No account with id: " + toId);
+            throw new AccountNotFoundException(toId);
         }
 
         // Subtract resources from 'from' account and add to 'to' account if subtract was successful
@@ -66,6 +68,12 @@ public class Wallet {
             // Rollback subtract of resources
             add(from, sum);
         }
+    }
+
+    public void delete(String id) {
+        operations.add(new DeleteOperation(id));
+
+        accounts.remove(id);
     }
 
     private boolean subtract(Account from, BigDecimal sum) {
