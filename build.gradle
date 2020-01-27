@@ -33,5 +33,28 @@ dependencies {
     testImplementation "org.mockito:mockito-core:${versions.mockito}"
     testImplementation "org.mockito:mockito-junit-jupiter:${versions.mockito}"
 
+    testImplementation "io.dropwizard:dropwizard-testing:${versions.dropwizard}"
+
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${versions.junit}"
+}
+
+def testResultLogging(test, testLogging) {
+    return {
+        testLogging.events "passed", "skipped", "failed"
+
+        // https://medium.com/@wasyl/pretty-tests-summary-in-gradle-744804dd676c
+        test.afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                def startItem = '|  ', endItem = '  |'
+                def repeatLength = startItem.length() + output.length() + endItem.length()
+                println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+            }
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+    testLogging testResultLogging(test, testLogging)
 }

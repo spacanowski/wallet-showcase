@@ -3,6 +3,7 @@ package io.github.spacanowski.wallet;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
 import io.github.spacanowski.wallet.configuration.SimpleWalletConfiguration;
+import io.github.spacanowski.wallet.datastore.Wallet;
 import io.github.spacanowski.wallet.health.WalletHealthCheck;
 import io.github.spacanowski.wallet.service.AccountService;
 
@@ -29,6 +30,7 @@ public class SimpleWalletApplication extends Application<SimpleWalletConfigurati
             @Override
             protected void configure() {
                 bind(AccountService.class).to(AccountService.class);
+                bind(Wallet.class).to(Wallet.class);
             }
         });
     }
