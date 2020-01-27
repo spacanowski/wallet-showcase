@@ -8,9 +8,9 @@ import javax.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class CreateAccount {
+public class Transfer {
 
     @NotNull
-    @DecimalMin(value = "0.0", inclusive = true)
-    private BigDecimal balance;
+    @DecimalMin(value = "0.0", inclusive = false)
+    private BigDecimal sum;
 }

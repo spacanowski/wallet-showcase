@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import com.codahale.metrics.annotation.Timed;
 
 import io.github.spacanowski.wallet.model.input.CreateAccount;
+import io.github.spacanowski.wallet.model.input.Transfer;
 import io.github.spacanowski.wallet.service.AccountService;
 
 import java.net.URI;
@@ -13,6 +14,7 @@ import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -50,6 +52,19 @@ public class AccountResource {
 
         return Response.created(URI.create(format("/accounts/%s", result.getId())))
                        .entity(result)
+                       .build();
+    }
+
+    @Timed
+    @PUT
+    @Path("/{id}/transfer/{to}")
+    public Response transferResources(@PathParam("id") String id,
+                                      @PathParam("to") String toId,
+                                      @Valid Transfer transfer) {
+        log.debug("Transfering between {} and {}", id, toId);
+
+        return Response.ok()
+                       .entity(accountService.transferResources(id, toId, transfer))
                        .build();
     }
 }

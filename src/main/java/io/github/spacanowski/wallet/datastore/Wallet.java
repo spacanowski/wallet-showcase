@@ -9,11 +9,18 @@ import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.BiFunction;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class Wallet {
+
+    private final BiFunction<Account, BigDecimal, Boolean> subtract =
+            (from, sum) -> executeSubtract(from, sum);
+
+    private final BiFunction<Account, BigDecimal, Boolean> add =
+            (to, sum) -> executeAdd(to, sum);
 
     private ConcurrentHashMap<String, Account> accounts = new ConcurrentHashMap<>();
     private Queue<Operation> operations = new ConcurrentLinkedQueue<>();
@@ -39,5 +46,71 @@ public class Wallet {
         operations.add(new CreateOpertaion(id, initianlBalance));
 
         return resault;
+    }
+
+    public void transfer(String fromId, String toId, BigDecimal sum) {
+        var from = accounts.get(fromId);
+
+        if (from == null) {
+            throw new IllegalArgumentException("No account with id: " + fromId);
+        }
+
+        var to = accounts.get(toId);
+
+        if (to == null) {
+            throw new IllegalArgumentException("No account with id: " + toId);
+        }
+
+        // Subtract resources from 'from' account and add to 'to' account if subtract was successful
+        if (subtract(from, sum) && !add(to, sum)) {
+            // Rollback subtract of resources
+            add(from, sum);
+        }
+    }
+
+    private boolean subtract(Account from, BigDecimal sum) {
+        return executeWithLock(from, sum, subtract);
+    }
+
+    private boolean executeSubtract(Account from, BigDecimal sum) {
+        if (from.getBalance().compareTo(sum) < 0) {
+            return false;
+        }
+
+        from.setBalance(from.getBalance().subtract(sum));
+
+        return true;
+    }
+
+    private boolean add(Account to, BigDecimal sum) {
+        return executeWithLock(to, sum, add);
+    }
+
+    private boolean executeAdd(Account to, BigDecimal sum) {
+        to.setBalance(to.getBalance().add(sum));
+
+        return true;
+    }
+
+    private boolean executeWithLock(Account account,
+                                    BigDecimal sum,
+                                    BiFunction<Account, BigDecimal, Boolean> operation) {
+        log.debug("Locking for transfer account {}", account.getId());
+
+        var lock = account.writeLock();
+        lock.lock();
+
+        log.debug("Locked for transfer account {}", account.getId());
+
+        try {
+            return operation.apply(account, sum);
+        } catch (Exception e) {
+            log.error("Failed transfer on account {}", account.getId(), e);
+            return false;
+        } finally {
+            log.debug("Unlocking after transfer account {}", account.getId());
+            lock.unlock();
+            log.debug("Unlocked after transfer account {}", account.getId());
+        }
     }
 }
