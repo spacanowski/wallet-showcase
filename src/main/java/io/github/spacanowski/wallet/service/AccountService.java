@@ -10,6 +10,8 @@ import io.github.spacanowski.wallet.model.input.Transfer;
 import io.github.spacanowski.wallet.model.output.AccountOutput;
 import io.github.spacanowski.wallet.model.output.TransferOutput;
 
+import java.util.List;
+
 import javax.inject.Inject;
 
 import lombok.RequiredArgsConstructor;
@@ -46,6 +48,10 @@ public class AccountService {
 
     public void deleteAccount(String id) {
         wallet.delete(id);
+    }
+
+    public List<String> getAuditData() {
+        return wallet.getOperations();
     }
 
     private AccountOutput toAccountOutput(Account account) {

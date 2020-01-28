@@ -1,5 +1,6 @@
 package io.github.spacanowski.wallet.resource;
 
+import static java.lang.String.format;
 import static javax.ws.rs.client.Entity.entity;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -27,6 +28,7 @@ import io.github.spacanowski.wallet.resource.providers.IllegalArgumentExceptionM
 import io.github.spacanowski.wallet.service.AccountService;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.junit.ClassRule;
 import org.junit.jupiter.api.AfterEach;
@@ -164,7 +166,7 @@ public class AccountResourceTest {
         when(accountService.transferResources(eq(fromId), eq(toId), eq(transfer)))
         .thenReturn(new TransferOutput(new AccountOutput(fromId, fromBalance), new AccountOutput(toId, toBalance)));
 
-        var response = resource.target(String.format("/accounts/%s/transfer/%s", fromId, toId))
+        var response = resource.target(format("/accounts/%s/transfer/%s", fromId, toId))
                                .request()
                                .put(entity(transfer, APPLICATION_JSON));
 
@@ -187,7 +189,7 @@ public class AccountResourceTest {
         var transfer = new Transfer();
         transfer.setSum(BigDecimal.valueOf(0));
 
-        var response = resource.target(String.format("/accounts/%s/transfer/%s", fromId, toId))
+        var response = resource.target(format("/accounts/%s/transfer/%s", fromId, toId))
                                .request()
                                .put(entity(transfer, APPLICATION_JSON));
 
@@ -202,7 +204,7 @@ public class AccountResourceTest {
         var transfer = new Transfer();
         transfer.setSum(BigDecimal.valueOf(-1.1));
 
-        var response = resource.target(String.format("/accounts/%s/transfer/%s", fromId, toId))
+        var response = resource.target(format("/accounts/%s/transfer/%s", fromId, toId))
                                .request()
                                .put(entity(transfer, APPLICATION_JSON));
 
@@ -219,7 +221,7 @@ public class AccountResourceTest {
         when(accountService.transferResources(eq(fromId), eq(fromId), eq(transfer)))
         .thenThrow(IllegalArgumentException.class);
 
-        var response = resource.target(String.format("/accounts/%s/transfer/%s", fromId, fromId))
+        var response = resource.target(format("/accounts/%s/transfer/%s", fromId, fromId))
                                .request()
                                .put(entity(transfer, APPLICATION_JSON));
 
@@ -230,10 +232,24 @@ public class AccountResourceTest {
     public void shouldDeleteAccount() {
         var id = "1-1-1";
 
-        var response = resource.target(String.format("/accounts/%s", id))
+        var response = resource.target(format("/accounts/%s", id))
                                .request()
                                .delete();
 
         assertThat(response.getStatus(), equalTo(NO_CONTENT.getStatusCode()));
+    }
+
+    @Test
+    public void shouldGetOperations() {
+        var auditLog = "Created account '1' with balance '2'";
+
+        when(accountService.getAuditData())
+        .thenReturn(List.of(auditLog));
+
+        var response = resource.target("/accounts/audits")
+                               .request()
+                               .get();
+
+        assertThat(response.getStatus(), equalTo(OK.getStatusCode()));
     }
 }

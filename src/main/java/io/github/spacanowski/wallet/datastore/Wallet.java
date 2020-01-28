@@ -7,11 +7,13 @@ import io.github.spacanowski.wallet.model.data.DeleteOperation;
 import io.github.spacanowski.wallet.model.data.Operation;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -74,6 +76,12 @@ public class Wallet {
         operations.add(new DeleteOperation(id));
 
         accounts.remove(id);
+    }
+
+    public List<String> getOperations() {
+        return operations.stream()
+                         .map(Operation::getAudit)
+                         .collect(Collectors.toList());
     }
 
     private boolean subtract(Account from, BigDecimal sum) {

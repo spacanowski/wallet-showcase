@@ -35,6 +35,17 @@ public class AccountResource {
 
     @Timed
     @GET
+    @Path("/audits")
+    public Response getAuditData() {
+        log.debug("Getting audit data");
+
+        return Response.ok()
+                       .entity(accountService.getAuditData())
+                       .build();
+    }
+
+    @Timed
+    @GET
     @Path("/{id}")
     public Response getAccount(@PathParam("id") String id) {
         log.debug("Getting account {}", id);

@@ -1,5 +1,6 @@
 package io.github.spacanowski.wallet.datastore;
 
+import static java.lang.String.format;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -169,5 +170,23 @@ public class WalletTest {
                    equalTo(account2InitialBalance
                                 .add(account1toAccount2Sum.multiply(operationsCount))
                                 .subtract(account2toAccount1Sum.multiply(operationsCount))));
+    }
+
+    @Test
+    public void shouldGetOperations() {
+        var wallet = new Wallet();
+        var balance = BigDecimal.valueOf(2.2);
+
+        var account = wallet.create(balance);
+
+        var operations = wallet.getOperations();
+
+        assertNotNull(operations);
+        assertThat(operations.size(), equalTo(1));
+
+        assertThat(operations.get(0),
+                   equalTo(format("Created account '%s' with balance '%s'",
+                                  account.getId(),
+                                  balance)));
     }
 }
