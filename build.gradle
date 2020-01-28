@@ -1,12 +1,25 @@
-apply plugin: 'java'
-apply plugin: 'eclipse'
-apply plugin: 'maven'
+plugins {
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+    id 'java'
+    id 'eclipse'
+    id 'maven'
+}
+
+group = 'io.github.spacanowski.wallet'
+project.version = '0.1.0'
 
 sourceCompatibility = 1.11
 targetCompatibility = 1.11
 
 repositories {
     jcenter()
+}
+
+shadowJar {
+    mergeServiceFiles()
+    manifest {
+        attributes 'Main-Class': 'io.github.spacanowski.wallet.SimpleWalletApplication'
+    }
 }
 
 ext {
