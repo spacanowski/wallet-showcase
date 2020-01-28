@@ -30,24 +30,40 @@ public class Wallet {
     private Queue<Operation> operations = new ConcurrentLinkedQueue<>();
 
     public Account get(String id) {
-        return accounts.get(id);
+        var account = accounts.get(id);
+
+        if (account == null) {
+            return null;
+        }
+
+        var resault = new Account();
+
+        resault.setId(account.getId());
+        resault.setBalance(account.getBalance());
+
+        return resault;
     }
 
     public Account create(BigDecimal initianlBalance) {
         var id = UUID.randomUUID().toString();
-        var resault = new Account();
+        var account = new Account();
 
-        resault.setId(id);
-        resault.setBalance(initianlBalance);
+        account.setId(id);
+        account.setBalance(initianlBalance);
 
-        var old = accounts.putIfAbsent(id, resault);
+        var old = accounts.putIfAbsent(id, account);
 
         if (old != null) {
             log.info("Id collision during account creation. Retrying.");
-            resault = create(initianlBalance);
+            account = create(initianlBalance);
         }
 
         operations.add(new CreateOpertaion(id, initianlBalance));
+
+        var resault = new Account();
+
+        resault.setId(account.getId());
+        resault.setBalance(account.getBalance());
 
         return resault;
     }
