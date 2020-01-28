@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import io.github.spacanowski.wallet.exception.AccountNotFoundException;
 
 import java.math.BigDecimal;
+import java.util.stream.IntStream;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -128,5 +129,45 @@ public class WalletTest {
         wallet.delete(account.getId());
 
         assertNull(wallet.get(account.getId()));
+    }
+
+    @Test
+    public void shouldTransferBetweenAccountsInThreadSafeWay() {
+        var wallet = new Wallet();
+
+        var account1InitialBalance = BigDecimal.valueOf(1000.0);
+        var account1 = wallet.create(account1InitialBalance);
+
+        var account2InitialBalance = BigDecimal.valueOf(1000.0);
+        var account2 = wallet.create(account2InitialBalance);
+
+        var account1toAccount2Sum = BigDecimal.valueOf(1.1);
+        var account2toAccount1Sum = BigDecimal.valueOf(2.2);
+
+        var operationsCount = BigDecimal.valueOf(100);
+
+        IntStream.range(1, operationsCount.intValue() * 2 + 1)
+                 .parallel()
+                 .forEach(i -> {
+                     if ((i % 2) == 0) {
+                         wallet.transfer(account1.getId(), account2.getId(), account1toAccount2Sum);
+                     } else {
+                         wallet.transfer(account2.getId(), account1.getId(), account2toAccount1Sum);
+                     }
+                 });
+
+        var account1AfterTransfer = wallet.get(account1.getId());
+
+        assertThat(account1AfterTransfer.getBalance(),
+                   equalTo(account1InitialBalance
+                                 .add(account2toAccount1Sum.multiply(operationsCount))
+                                 .subtract(account1toAccount2Sum.multiply(operationsCount))));
+
+        var account2AfterTransfer = wallet.get(account2.getId());
+
+        assertThat(account2AfterTransfer.getBalance(),
+                   equalTo(account2InitialBalance
+                                .add(account1toAccount2Sum.multiply(operationsCount))
+                                .subtract(account2toAccount1Sum.multiply(operationsCount))));
     }
 }
