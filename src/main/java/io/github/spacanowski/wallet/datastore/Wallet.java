@@ -1,6 +1,7 @@
 package io.github.spacanowski.wallet.datastore;
 
 import io.github.spacanowski.wallet.exception.AccountNotFoundException;
+import io.github.spacanowski.wallet.exception.InsufficientResourcesException;
 import io.github.spacanowski.wallet.model.data.Account;
 import io.github.spacanowski.wallet.model.data.CreateOpertaion;
 import io.github.spacanowski.wallet.model.data.DeleteOperation;
@@ -36,12 +37,19 @@ public class Wallet {
             return null;
         }
 
-        var resault = new Account();
+        var readLock = account.readLock();
+        readLock.lock();
 
-        resault.setId(account.getId());
-        resault.setBalance(account.getBalance());
+        try {
+            var resault = new Account();
 
-        return resault;
+            resault.setId(account.getId());
+            resault.setBalance(account.getBalance());
+
+            return resault;
+        } finally {
+            readLock.unlock();
+        }
     }
 
     public Account create(BigDecimal initianlBalance) {
@@ -106,7 +114,7 @@ public class Wallet {
 
     private boolean executeSubtract(Account from, BigDecimal sum) {
         if (from.getBalance().compareTo(sum) < 0) {
-            return false;
+            throw new InsufficientResourcesException(from.getId());
         }
 
         from.setBalance(from.getBalance().subtract(sum));
@@ -136,6 +144,9 @@ public class Wallet {
 
         try {
             return operation.apply(account, sum);
+        } catch (InsufficientResourcesException e) {
+            log.error("Failed transfer on account {}", account.getId(), e);
+            throw e;
         } catch (Exception e) {
             log.error("Failed transfer on account {}", account.getId(), e);
             return false;

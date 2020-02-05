@@ -4,7 +4,6 @@ import static io.github.spacanowski.wallet.model.mapper.AccountMapper.toOutput;
 
 import io.github.spacanowski.wallet.datastore.Wallet;
 import io.github.spacanowski.wallet.exception.AccountNotFoundException;
-import io.github.spacanowski.wallet.model.data.Account;
 import io.github.spacanowski.wallet.model.input.CreateAccount;
 import io.github.spacanowski.wallet.model.input.Transfer;
 import io.github.spacanowski.wallet.model.output.AccountOutput;
@@ -28,11 +27,11 @@ public class AccountService {
             throw new AccountNotFoundException(id);
         }
 
-        return toAccountOutput(result);
+        return toOutput(result);
     }
 
     public AccountOutput createAccount(CreateAccount account) {
-        return toAccountOutput(wallet.create(account.getBalance()));
+        return toOutput(wallet.create(account.getBalance()));
     }
 
     public TransferOutput transferResources(String from, String to, Transfer transfer) {
@@ -42,8 +41,8 @@ public class AccountService {
 
         wallet.transfer(from, to, transfer.getSum());
 
-        return new TransferOutput(toAccountOutput(wallet.get(from)),
-                                  toAccountOutput(wallet.get(to)));
+        return new TransferOutput(toOutput(wallet.get(from)),
+                                  toOutput(wallet.get(to)));
     }
 
     public void deleteAccount(String id) {
@@ -52,16 +51,5 @@ public class AccountService {
 
     public List<String> getAuditData() {
         return wallet.getOperations();
-    }
-
-    private AccountOutput toAccountOutput(Account account) {
-        var readLock = account.readLock();
-        readLock.lock();
-
-        try {
-            return toOutput(account);
-        } finally {
-            readLock.unlock();
-        }
     }
 }

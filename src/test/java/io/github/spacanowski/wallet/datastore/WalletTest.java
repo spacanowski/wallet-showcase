@@ -8,6 +8,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.github.spacanowski.wallet.exception.AccountNotFoundException;
+import io.github.spacanowski.wallet.exception.InsufficientResourcesException;
 
 import java.math.BigDecimal;
 import java.util.stream.IntStream;
@@ -77,7 +78,8 @@ public class WalletTest {
         var toInitialBalance = BigDecimal.valueOf(0.0);
         var to = wallet.create(toInitialBalance);
 
-        wallet.transfer(from.getId(), to.getId(), fromInitialBalance.multiply(BigDecimal.valueOf(2)));
+        assertThrows(InsufficientResourcesException.class,
+                     () -> wallet.transfer(from.getId(), to.getId(), fromInitialBalance.multiply(BigDecimal.valueOf(2))));
 
         var fromAfterTransfer = wallet.get(from.getId());
 

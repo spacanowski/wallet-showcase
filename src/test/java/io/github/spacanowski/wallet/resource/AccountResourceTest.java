@@ -19,12 +19,14 @@ import static org.mockito.Mockito.when;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import io.github.spacanowski.wallet.exception.AccountNotFoundException;
+import io.github.spacanowski.wallet.exception.InsufficientResourcesException;
 import io.github.spacanowski.wallet.model.input.CreateAccount;
 import io.github.spacanowski.wallet.model.input.Transfer;
 import io.github.spacanowski.wallet.model.output.AccountOutput;
 import io.github.spacanowski.wallet.model.output.TransferOutput;
 import io.github.spacanowski.wallet.resource.providers.AccountNotFoundExceptionMapper;
 import io.github.spacanowski.wallet.resource.providers.IllegalArgumentExceptionMapper;
+import io.github.spacanowski.wallet.resource.providers.UnsufficientResourcesExceptionMapper;
 import io.github.spacanowski.wallet.service.AccountService;
 
 import java.math.BigDecimal;
@@ -41,11 +43,13 @@ public class AccountResourceTest {
     private static final AccountService accountService = mock(AccountService.class);
 
     @ClassRule
-    public static final ResourceExtension resource = ResourceExtension.builder()
-                                                                      .addResource(new AccountResource(accountService))
-                                                                      .addProvider(new IllegalArgumentExceptionMapper())
-                                                                      .addProvider(new AccountNotFoundExceptionMapper())
-                                                                      .build();
+    public static final ResourceExtension resource = ResourceExtension
+                                                            .builder()
+                                                            .addResource(new AccountResource(accountService))
+                                                            .addProvider(new IllegalArgumentExceptionMapper())
+                                                            .addProvider(new AccountNotFoundExceptionMapper())
+                                                            .addProvider(new UnsufficientResourcesExceptionMapper())
+                                                            .build();
 
     @AfterEach
     public void tearDown(){
@@ -179,6 +183,24 @@ public class AccountResourceTest {
 
         assertThat(result.getTo().getId(), equalTo(toId));
         assertThat(result.getTo().getBalance(), equalTo(toBalance));
+    }
+
+    @Test
+    public void shouldNotTransferIfResourcesAreInsufficient() {
+        var fromId = "1-1-1";
+        var toId = "2-2-2";
+
+        var transfer = new Transfer();
+        transfer.setSum(BigDecimal.valueOf(1.1));
+
+        when(accountService.transferResources(eq(fromId), eq(toId), eq(transfer)))
+        .thenThrow(InsufficientResourcesException.class);
+
+        var response = resource.target(format("/accounts/%s/transfer/%s", fromId, toId))
+                               .request()
+                               .put(entity(transfer, APPLICATION_JSON));
+
+        assertThat(response.getStatus(), equalTo(BAD_REQUEST.getStatusCode()));
     }
 
     @Test
