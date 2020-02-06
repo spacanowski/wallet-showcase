@@ -7,6 +7,8 @@ import io.github.spacanowski.wallet.datastore.Wallet;
 import io.github.spacanowski.wallet.health.WalletHealthCheck;
 import io.github.spacanowski.wallet.service.AccountService;
 
+import javax.inject.Singleton;
+
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 public class SimpleWalletApplication extends Application<SimpleWalletConfiguration> {
@@ -29,8 +31,8 @@ public class SimpleWalletApplication extends Application<SimpleWalletConfigurati
         environment.jersey().register(new AbstractBinder() {
             @Override
             protected void configure() {
-                bind(AccountService.class).to(AccountService.class);
-                bind(Wallet.class).to(Wallet.class);
+                bind(AccountService.class).to(AccountService.class).in(Singleton.class);
+                bind(Wallet.class).to(Wallet.class).in(Singleton.class);
             }
         });
     }
